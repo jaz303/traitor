@@ -1,5 +1,6 @@
 exports.make = make;
 exports.register = register;
+exports.extend = extend;
 
 var registry = {};
 
@@ -62,12 +63,12 @@ function make(traits, opts) {
 
 }
 
+function extend(sup, traits, opts) {
+    return make(sup.prototype.traits.concat(traits), opts);
+}
+
 function register(trait, cb) {
-    
-    var descriptor = cb();
-
-    registry[trait] = descriptor;
-
+    registry[trait] = cb();
 }
 
 register('emitter', function() {
