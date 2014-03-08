@@ -16,15 +16,17 @@ function make(traits, opts) {
 
     opts = opts || {};
 
+    var builder = new TraitBuilder();
+    
+    traits.forEach(function(tn) {
+        lookup(tn)(builder);
+    });
+
     var ctor = null;
 
     switch (opts.initializer || 'closure') {
         case 'closure':
-            var initializers = traits.map(function(t) {
-                return lookup(t).init;
-            }).filter(function(init) {
-                return typeof init === 'function';
-            });
+            var initializers = builder._initializers;
             ctor = function(args) {
                 initializers.forEach(function(i) {
                     i.call(this, args);
@@ -33,11 +35,8 @@ function make(traits, opts) {
             break;
         case 'eval':
             var initializer = "(function(args) {\n";
-            traits.forEach(function(tn) {
-                var t = lookup(tn);
-                if ('init' in t) {
-                    initializer += '(' + (t.init) + ").call(this, args);\n";
-                }
+            builder._initializers.forEach(function(i) {
+                initializer += '(' + i + ").call(this, args);\n";
             });
             initializer += "})";
             ctor = eval(initializer);
@@ -46,17 +45,13 @@ function make(traits, opts) {
             throw new Error("invalid initializer style: " + opts.initializer);
     }
 
-    Object.defineProperty(ctor.prototype, 'traits', {
-        get: function() { return traits.slice(0); }
+    var ps = builder._properties;
+    Object.getOwnPropertyNames(ps).forEach(function(k) {
+        Object.defineProperty(ctor.prototype, k, Object.getOwnPropertyDescriptor(ps, k));
     });
 
-    traits.forEach(function(tn) {
-        var t = lookup(tn);
-        for (var k in t) {
-            if (k !== 'init') {
-                ctor.prototype[k] = t[k];
-            }
-        }
+    Object.defineProperty(ctor.prototype, 'traits', {
+        get: function() { return traits.slice(0); }
     });
 
     return ctor;
@@ -68,44 +63,68 @@ function extend(sup, traits, opts) {
 }
 
 function register(trait, cb) {
-    registry[trait] = cb();
+    registry[trait] = cb;
 }
 
-register('emitter', function() {
+//
+// TraitBuilder
+
+function TraitBuilder() {
+    this._initializers = [];
+    this._properties = {};
+}
+
+TraitBuilder.prototype.init = function(fn) {
+    this._initializers.push(fn);
+}
+
+TraitBuilder.prototype.method = function(name, fn) {
+    this._properties[name] = fn;
+}
+
+TraitBuilder.prototype.property = function(name, descriptor) {
+    Object.defineProperty(this._properties, name, descriptor);
+}
+
+//
+// Builtin traits
+
+register('emitter', function(def) {
 
     var slice = Array.prototype.slice;
 
-    return {
-        init: function() {
-            this._emitterHandlers = {};
-        },
-        on: function(ev, callback) {
-            var lst = this._emitterHandlers[ev] || (this._emitterHandlers[ev] = []);
-            lst.push(callback);
+    def.init(function() {
+        this._emitterHandlers = {};
+    });
 
-            var removed = false;
-            return function() {
-                if (!removed) {
-                    lst.splice(lst.indexOf(callback), 1);
-                    removed = true;
-                }
-            }
-        },
-        once: function(ev, callback) {
-            var cancel = this.on(ev, function() {
-                callback.apply(null, arguments);
-                cancel();
-            });
-        },
-        emit: function(ev) {
-            var lst = this._emitterHandlers[ev];
-            if (lst) {
-                var args = slice.call(arguments, 1);
-                for (var i = 0, l = lst.length; i < l; ++i) {
-                    lst[i].apply(null, args);
-                }
+    def.method('on', function(ev, callback) {
+        var lst = this._emitterHandlers[ev] || (this._emitterHandlers[ev] = []);
+        lst.push(callback);
+
+        var removed = false;
+        return function() {
+            if (!removed) {
+                lst.splice(lst.indexOf(callback), 1);
+                removed = true;
             }
         }
-    };
+    });
+
+    def.method('once', function(ev, callback) {
+        var cancel = this.on(ev, function() {
+            callback.apply(null, arguments);
+            cancel();
+        });
+    });
+
+    def.method('emit', function(ev) {
+        var lst = this._emitterHandlers[ev];
+        if (lst) {
+            var args = slice.call(arguments, 1);
+            for (var i = 0, l = lst.length; i < l; ++i) {
+                lst[i].apply(null, args);
+            }
+        }
+    });
 
 });
