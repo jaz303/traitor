@@ -1,7 +1,7 @@
 var traits  = require('../'),
     test    = require('tape');
 
-test('init 1', function(a) {
+test('init one', function(a) {
 
     traits.register('init-1', function(def) {
         def.init(function(opts) {
@@ -18,7 +18,7 @@ test('init 1', function(a) {
 
 });
 
-test('init 2', function(a) {
+test('init multi', function(a) {
 
     traits.register('init-2a', function(def) {
         def.init(function(opts) {
@@ -33,6 +33,31 @@ test('init 2', function(a) {
     });
 
     var ctor = traits.make(['init-2a', 'init-2b']);
+
+    var obj = new ctor();
+
+    a.equal(obj.foo, 'hellogoodbye');
+    a.end();
+
+});
+
+test('init multi, eval', function(a) {
+
+    traits.register('init-evala', function(def) {
+        def.init(function(opts) {
+            this.foo = 'hello';
+        })
+    });
+
+    traits.register('init-evalb', function(def) {
+        def.init(function(opts) {
+            this.foo += 'goodbye';
+        })
+    });
+
+    var ctor = traits.make(['init-2a', 'init-2b'], {
+        initializer: 'eval'
+    });
 
     var obj = new ctor();
 
@@ -89,6 +114,66 @@ test('property', function(a) {
     var obj = new ctor;
 
     a.equal(obj.cake, 'custard');
+    a.end();
+
+});
+
+test('extend', function(a) {
+
+    traits.register('x-1', function(){});
+    traits.register('x-2', function(){});
+    traits.register('x-3', function(){});
+    traits.register('x-4', function(){});
+
+    var c1 = traits.make(['x-1', 'x-2']);
+    var c2 = traits.extend(c1, ['x-3', 'x-4']);
+
+    a.deepEqual(c2.prototype.traits, ['x-1', 'x-2', 'x-3', 'x-4']);
+    a.end();
+
+});
+
+//
+// emitter
+
+test('on, emit and cancel', function(a) {
+
+    var ctor = traits.make(['emitter']),
+        obj = new ctor(),
+        tally = 0;
+
+    var cancel = obj.on('foo', function() {
+        tally++;
+    });
+
+    obj.emit('foo');
+    obj.emit('foo');
+    obj.emit('bar');
+
+    cancel();
+
+    obj.emit('foo');
+
+    a.equal(tally, 2);
+    a.end();
+
+});
+
+test('once', function(a) {
+
+    var ctor = traits.make(['emitter']),
+        obj = new ctor(),
+        tally = 0;
+
+    obj.once('foo', function() {
+        tally++;
+    });
+
+    obj.emit('foo');
+    obj.emit('foo');
+    obj.emit('foo');
+
+    a.equal(tally, 1);
     a.end();
 
 });
