@@ -115,6 +115,7 @@ register('emitter', function(def) {
             callback.apply(null, arguments);
             cancel();
         });
+        return cancel;
     });
 
     def.method('emit', function(ev) {
