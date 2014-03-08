@@ -43,7 +43,8 @@ function make(traits, opts) {
             throw new Error("invalid initializer style: " + opts.initializer);
     }
 
-    traits.forEach(function(t) {
+    traits.forEach(function(tn) {
+        var t = lookup(tn);
         for (var k in t) {
             if (k !== 'init') {
                 ctor.prototype[k] = t[k];
