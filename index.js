@@ -63,3 +63,42 @@ function register(trait, cb) {
     registry[trait] = descriptor;
 
 }
+
+register('emitter', function() {
+
+    var slice = Array.prototype.slice;
+
+    return {
+        init: function() {
+            this._emitterHandlers = {};
+        },
+        on: function(ev, callback) {
+            var lst = this._emitterHandlers[ev] || (this._emitterHandlers[ev] = []);
+            lst.push(callback);
+
+            var removed = false;
+            return function() {
+                if (!removed) {
+                    lst.splice(lst.indexOf(callback), 1);
+                    removed = true;
+                }
+            }
+        },
+        once: function(ev, callback) {
+            var cancel = this.on(ev, function() {
+                callback.apply(null, arguments);
+                cancel();
+            });
+        },
+        emit: function(ev) {
+            var lst = this._emitterHandlers[ev];
+            if (lst) {
+                var args = slice.call(arguments, 1);
+                for (var i = 0, l = lst.length; i < l; ++i) {
+                    lst[i].apply(null, args);
+                }
+            }
+        }
+    };
+
+});
