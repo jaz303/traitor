@@ -45,6 +45,10 @@ function make(traits, opts) {
             throw new Error("invalid initializer style: " + opts.initializer);
     }
 
+    Object.defineProperty(ctor.prototype, 'traits', {
+        get: function() { return traits.slice(0); }
+    });
+
     traits.forEach(function(tn) {
         var t = lookup(tn);
         for (var k in t) {

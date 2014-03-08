@@ -50,4 +50,6 @@ p1.emit('bar');
 p1.emit('bar');
 p1.emit('bar');
 
+console.log(p1.traits);
+
 // console.log(p1);
