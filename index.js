@@ -21,6 +21,8 @@ function make(traits, opts) {
         case 'closure':
             var initializers = traits.map(function(t) {
                 return lookup(t).init;
+            }).filter(function(init) {
+                return typeof init === 'function';
             });
             ctor = function(args) {
                 initializers.forEach(function(i) {

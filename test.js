@@ -23,8 +23,12 @@ traits.register('physics', function() {
 
 });
 
-var point = traits.make(['position', 'physics', 'emitter'], {
-    initializer: 'eval'
+traits.register('foo', function() {
+    return {};
+})
+
+var point = traits.make(['position', 'physics', 'emitter', 'foo'], {
+    initializer: 'closure'
 });
 
 var p1 = new point({x: 1, y: 2});
