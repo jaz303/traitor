@@ -129,3 +129,18 @@ register('emitter', function(def) {
     });
 
 });
+
+register('methods', function(def) {
+
+    def.method('boundMethod', function(method) {
+        return this[method].bind(this);
+    });
+
+    def.method('lazyMethod', function(method) {
+        var self = this;
+        return function() {
+            return self[method].apply(self, arguments);
+        }
+    });
+
+});
