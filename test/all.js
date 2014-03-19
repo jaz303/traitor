@@ -177,3 +177,41 @@ test('once', function(a) {
     a.end();
 
 });
+
+test('bound method', function(a) {
+
+    var ctor = traits.make(['methods']),
+        obj = new ctor(),
+        called = null;
+
+    obj.foo = function() { called = 'a'; }
+
+    var method = obj.boundMethod('foo');
+
+    obj.foo = function() { called = 'b'; }
+
+    method();
+
+    a.equal(called, 'a');
+    a.end();
+
+});
+
+test('lazy method', function(a) {
+
+    var ctor = traits.make(['methods']),
+        obj = new ctor(),
+        called = null;
+
+    obj.foo = function() { called = 'a'; }
+
+    var method = obj.lazyMethod('foo');
+
+    obj.foo = function() { called = 'b'; }
+
+    method();
+
+    a.equal(called, 'b');
+    a.end();
+
+});
