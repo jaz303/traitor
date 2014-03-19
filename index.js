@@ -19,7 +19,13 @@ function make(traits, opts) {
     var builder = new TraitBuilder();
     
     traits.forEach(function(tn) {
-        lookup(tn)(builder);
+        if (typeof tn === 'string') {
+            lookup(tn)(builder);
+        } else if (typeof tn === 'function') {
+            tn(builder);
+        } else {
+            throw new Error("traits must strings or functions");
+        }
     });
 
     var ctor = null;

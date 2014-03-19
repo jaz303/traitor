@@ -1,6 +1,21 @@
 var traits  = require('../'),
     test    = require('tape');
 
+test('anonymous traits', function(a) {
+
+    var ctor = traits.make([
+        function(def) { def.method('a', function() { return 'a'; }); },
+        function(def) { def.method('b', function() { return 'b'; }); }
+    ]);
+
+    var obj = new ctor();
+
+    a.equal(obj.a(), 'a');
+    a.equal(obj.b(), 'b');
+    a.end();
+
+});
+
 test('init one', function(a) {
 
     traits.register('init-1', function(def) {
