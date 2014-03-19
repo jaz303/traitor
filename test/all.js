@@ -91,7 +91,25 @@ test('trait list', function(a) {
 
     var obj = new ctor;
 
-    a.deepEqual(obj.traits, ['trait-list-1', 'trait-list-2', 'trait-list-3']);
+    a.deepEqual(obj._traits, ['trait-list-1', 'trait-list-2', 'trait-list-3']);
+    a.end();
+
+});
+
+test('meta - hasTrait', function(a) {
+
+    traits.register('meta-ht-1', function(){});
+    traits.register('meta-ht-2', function(){});
+    traits.register('meta-ht-3', function(){});
+    
+    var ctor = traits.make(['meta', 'meta-ht-1', 'meta-ht-2']);
+
+    var obj = new ctor;
+
+    a.ok(obj.hasTrait('meta'));
+    a.ok(obj.hasTrait('meta-ht-1'));
+    a.ok(obj.hasTrait('meta-ht-2'));
+    a.ok(!obj.hasTrait('meta-ht-3'));
     a.end();
 
 });
@@ -143,7 +161,7 @@ test('extend', function(a) {
     var c1 = traits.make(['x-1', 'x-2']);
     var c2 = traits.extend(c1, ['x-3', 'x-4']);
 
-    a.deepEqual(c2.prototype.traits, ['x-1', 'x-2', 'x-3', 'x-4']);
+    a.deepEqual(c2.prototype._traits, ['x-1', 'x-2', 'x-3', 'x-4']);
     a.end();
 
 });

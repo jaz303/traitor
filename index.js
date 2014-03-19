@@ -56,7 +56,7 @@ function make(traits, opts) {
         Object.defineProperty(ctor.prototype, k, Object.getOwnPropertyDescriptor(ps, k));
     });
 
-    Object.defineProperty(ctor.prototype, 'traits', {
+    Object.defineProperty(ctor.prototype, '_traits', {
         get: function() { return traits.slice(0); }
     });
 
@@ -65,7 +65,7 @@ function make(traits, opts) {
 }
 
 function extend(sup, traits, opts) {
-    return make(sup.prototype.traits.concat(traits), opts);
+    return make(sup.prototype._traits.concat(traits), opts);
 }
 
 function register(trait, cb) {
@@ -94,6 +94,14 @@ TraitBuilder.prototype.property = function(name, descriptor) {
 
 //
 // Builtin traits
+
+register('meta', function(def) {
+
+    def.method('hasTrait', function(trait) {
+        return this._traits.indexOf(trait) >= 0;
+    });
+
+});
 
 register('emitter', function(def) {
 
