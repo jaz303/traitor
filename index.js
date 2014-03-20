@@ -2,6 +2,8 @@ exports.make = make;
 exports.register = register;
 exports.extend = extend;
 
+var INIT = '__init__';
+
 var registry = {};
 
 function lookup(trait) {
@@ -9,6 +11,15 @@ function lookup(trait) {
         return registry[trait];
     } else {
         throw new Error("unknown trait: " + trait);
+    }
+}
+
+function makeChain(fns) {
+    return function() {
+        var args = arguments;
+        fns.forEach(function(f) {
+            f.apply(this, args);
+        }, this);
     }
 }
 
@@ -30,9 +41,9 @@ function make(traits, opts) {
 
     var ctor = null;
 
+    var initializers = builder._chains[INIT] || [];
     switch (opts.initializer || 'closure') {
         case 'closure':
-            var initializers = builder._initializers;
             ctor = function(args) {
                 initializers.forEach(function(i) {
                     i.call(this, args);
@@ -41,7 +52,7 @@ function make(traits, opts) {
             break;
         case 'eval':
             var initializer = "(function(args) {\n";
-            builder._initializers.forEach(function(i) {
+            initializers.forEach(function(i) {
                 initializer += '(' + i + ").call(this, args);\n";
             });
             initializer += "})";
@@ -55,6 +66,11 @@ function make(traits, opts) {
     Object.getOwnPropertyNames(ps).forEach(function(k) {
         Object.defineProperty(ctor.prototype, k, Object.getOwnPropertyDescriptor(ps, k));
     });
+
+    for (var k in builder._chains) {
+        if (k === INIT) continue;
+        ctor.prototype[k] = makeChain(builder._chains[k]);
+    }
 
     Object.defineProperty(ctor.prototype, '_traits', {
         get: function() { return traits.slice(0); }
@@ -76,12 +92,21 @@ function register(trait, cb) {
 // TraitBuilder
 
 function TraitBuilder() {
-    this._initializers = [];
+    this._chains = {};
     this._properties = {};
 }
 
 TraitBuilder.prototype.init = function(fn) {
-    this._initializers.push(fn);
+    return this.chain(INIT, fn);
+}
+
+TraitBuilder.prototype.chain = function(name, fn, prepend) {
+    var chain = this._chains[name] || (this._chains[name] = []);
+    if (prepend) {
+        chain.unshift(fn);
+    } else {
+        chain.push(fn);
+    }
 }
 
 TraitBuilder.prototype.method = function(name, fn) {

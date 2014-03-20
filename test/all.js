@@ -151,6 +151,37 @@ test('property', function(a) {
 
 });
 
+test('chain', function(a) {
+
+    traits.register('chain-1', function(def) {
+        def.chain('foo', function(v) {
+            this.test += 'b' + v;
+        });
+    });
+
+    traits.register('chain-2', function(def) {
+        def.chain('foo', function(v) {
+            this.test = 'a' + v;
+        }, true);
+    });
+
+    traits.register('chain-3', function(def) {
+        def.chain('foo', function(v) {
+            this.test += 'c' + v;
+        });
+    });
+
+    var ctor = traits.make(['chain-1', 'chain-2', 'chain-3']);
+
+    var obj = new ctor;
+
+    obj.foo(5);
+
+    a.equal(obj.test, 'a5b5c5');
+    a.end();
+
+});
+
 test('extend', function(a) {
 
     traits.register('x-1', function(){});
