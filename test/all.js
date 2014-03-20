@@ -197,6 +197,24 @@ test('extend', function(a) {
 
 });
 
+test('expand', function(a) {
+
+    traits.register('exp-1', function() {});
+    traits.register('exp-2', function() {});
+    traits.register('exp-3', function() {});
+    traits.register('exp-4', function() {});
+    traits.register('exp-5', function() {});
+
+    traits.register('@exp-a', ['exp-2', 'exp-3']);
+    traits.register('@exp-b', ['exp-4']);
+
+    var ctor = traits.make(['exp-1', '@exp-a', '@exp-b', 'exp-5']);
+
+    a.deepEqual(ctor.prototype._traits, ['exp-1', 'exp-2', 'exp-3', 'exp-4', 'exp-5']);
+    a.end();
+
+});
+
 //
 // emitter
 

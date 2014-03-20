@@ -6,6 +6,18 @@ var INIT = '__init__';
 
 var registry = {};
 
+function expand(traits) {
+    var out = [];
+    traits.forEach(function(t) {
+        if (typeof t === 'string' && Array.isArray(registry[t])) {
+            out = out.concat(expand(registry[t]));
+        } else {
+            out.push(t);
+        }
+    });
+    return out;
+}
+
 function lookup(trait) {
     if (trait in registry) {
         return registry[trait];
@@ -28,7 +40,9 @@ function make(traits, opts) {
     opts = opts || {};
 
     var builder = new TraitBuilder();
-    
+
+    traits = expand(traits);
+
     traits.forEach(function(tn) {
         if (typeof tn === 'string') {
             lookup(tn)(builder);
