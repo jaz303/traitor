@@ -1,10 +1,10 @@
-exports.make = make;
-exports.register = register;
-exports.extend = extend;
+var registry        = require('./lib/registry'),
+    TraitBuilder    = require('./lib/TraitBuilder'),
+    TraitInstance   = require('./lib/TraitInstance');
 
-var INIT = '__init__';
-
-var registry = {};
+exports.register    = registry.register;
+exports.make        = make;
+exports.extend      = extend;
 
 function expand(traits) {
     var out = [];
@@ -16,14 +16,6 @@ function expand(traits) {
         }
     });
     return out;
-}
-
-function lookup(trait) {
-    if (trait in registry) {
-        return registry[trait];
-    } else {
-        throw new Error("unknown trait: " + trait);
-    }
 }
 
 function makeChain(fns) {
@@ -39,23 +31,21 @@ function make(traits, opts) {
 
     opts = opts || {};
 
+    traits = registry.expand(traits);
+
     var builder = new TraitBuilder();
 
-    traits = expand(traits);
+    traits.forEach(function(t) {
+        builder.require(t);
+    });
 
-    traits.forEach(function(tn) {
-        if (typeof tn === 'string') {
-            lookup(tn)(builder);
-        } else if (typeof tn === 'function') {
-            tn(builder);
-        } else {
-            throw new Error("traits must strings or functions");
-        }
+    builder._prepares.forEach(function(fn) {
+        fn();
     });
 
     var ctor = null;
 
-    var initializers = builder._chains[INIT] || [];
+    var initializers = builder._chains['__init__'] || [];
     switch (opts.initializer || 'closure') {
         case 'closure':
             ctor = function(args) {
@@ -82,7 +72,7 @@ function make(traits, opts) {
     });
 
     for (var k in builder._chains) {
-        if (k === INIT) continue;
+        if (k === '__init__') continue;
         ctor.prototype[k] = makeChain(builder._chains[k]);
     }
 
@@ -98,102 +88,4 @@ function extend(sup, traits, opts) {
     return make(sup.prototype._traits.concat(traits), opts);
 }
 
-function register(trait, cb) {
-    registry[trait] = cb;
-}
-
-//
-// TraitBuilder
-
-function TraitBuilder() {
-    this._chains = {};
-    this._properties = {};
-}
-
-TraitBuilder.prototype.init = function(fn) {
-    return this.chain(INIT, fn);
-}
-
-TraitBuilder.prototype.chain = function(name, fn, prepend) {
-    var chain = this._chains[name] || (this._chains[name] = []);
-    if (prepend) {
-        chain.unshift(fn);
-    } else {
-        chain.push(fn);
-    }
-}
-
-TraitBuilder.prototype.method = function(name, fn) {
-    this._properties[name] = fn;
-}
-
-TraitBuilder.prototype.property = function(name, descriptor) {
-    Object.defineProperty(this._properties, name, descriptor);
-}
-
-//
-// Builtin traits
-
-register('meta', function(def) {
-
-    def.method('hasTrait', function(trait) {
-        return this._traits.indexOf(trait) >= 0;
-    });
-
-});
-
-register('emitter', function(def) {
-
-    var slice = Array.prototype.slice;
-
-    def.init(function() {
-        this._emitterHandlers = {};
-    });
-
-    def.method('on', function(ev, callback) {
-        var lst = this._emitterHandlers[ev] || (this._emitterHandlers[ev] = []);
-        lst.push(callback);
-
-        var removed = false;
-        return function() {
-            if (!removed) {
-                lst.splice(lst.indexOf(callback), 1);
-                removed = true;
-            }
-        }
-    });
-
-    def.method('once', function(ev, callback) {
-        var cancel = this.on(ev, function() {
-            callback.apply(null, arguments);
-            cancel();
-        });
-        return cancel;
-    });
-
-    def.method('emit', function(ev) {
-        var lst = this._emitterHandlers[ev];
-        if (lst) {
-            var args = slice.call(arguments, 1);
-            for (var i = 0, l = lst.length; i < l; ++i) {
-                lst[i].apply(null, args);
-            }
-        }
-    });
-
-});
-
-register('methods', function(def) {
-
-    def.method('boundMethod', function(method) {
-        return this[method].bind(this);
-    });
-
-    def.method('lazyMethod', function(method) {
-        var self = this;
-        return function() {
-            return self[method].apply(self, arguments);
-        }
-    });
-
-});
+require('./lib/builtins');
