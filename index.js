@@ -8,13 +8,9 @@ exports.extend      = extend;
 
 function make(traits, opts) {
 
-    var builder = new TraitBuilder();
-
     traits = registry.expand(traits);
 
-    traits.forEach(function(t) {
-        builder.require(t);
-    });
+    var builder = new TraitBuilder(traits);
 
     var ctor = builder.__compile__(opts || {});
 
