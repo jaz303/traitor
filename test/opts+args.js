@@ -51,24 +51,25 @@ test('presence of trait option can be checked with instance.hasOpt', function(a)
 
 });
 
-test('trait option can be set in one trait and picked up by other trait in prepare callback', function(a) {
+test('trait option can be set in prepare callback and picked up by other trait', function(a) {
 
-    traits.register('t5', function(def, opts) {
+    traits.register('t5', {
+        prepare: function(def, a) {
+            def.get('t6').setOpt('a', a);
+        },
+        apply: function() {
 
-        a.notOk('a' in opts);
-
-        def.prepare(function() {
-            a.ok('a' in opts);
-        });
-
+        }
     });
 
-    traits.register('t6', function(def) {
-        var t5 = def.get('t5');
-        t5.setOpt('a', true);
+    traits.register('t6', function(def, opts) {
+        a.ok(opts.a === 100);
     });
 
-    var ctor = traits.make(['t5', 't6']);
+    var ctor = traits.make([
+        't6',
+        ['t5', 100]
+    ]);
 
     a.end();
 
