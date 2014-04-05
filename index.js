@@ -19,6 +19,7 @@ function make(traits, opts) {
     var ctor = builder.__compile__(opts || {});
 
     // FIXME: this is a total hack and should be destroyed
+    // (only exists because some tests still rely on it)
     Object.defineProperty(ctor.prototype, '_traits', {
         get: function() { return traits.slice(0); }
     });
