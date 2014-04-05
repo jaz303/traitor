@@ -215,6 +215,21 @@ test('expand', function(a) {
 
 });
 
+test('traits should only be applied once, no matter how many times they are specified', function(a) {
+
+    var i = 0;
+
+    traits.register('dup-1', function() {
+        i++;
+    });
+
+    var ctor = traits.make(['dup-1', 'dup-1', 'dup-1']);
+
+    a.ok(i === 1);
+    a.end();
+
+});
+
 //
 // emitter
 
