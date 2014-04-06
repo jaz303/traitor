@@ -56,31 +56,6 @@ test('init multi', function(a) {
 
 });
 
-test('init multi, eval', function(a) {
-
-    traits.register('init-evala', function(def) {
-        def.init(function(opts) {
-            this.foo = 'hello';
-        })
-    });
-
-    traits.register('init-evalb', function(def) {
-        def.init(function(opts) {
-            this.foo += 'goodbye';
-        })
-    });
-
-    var ctor = traits.make(['init-2a', 'init-2b'], {
-        initializer: 'eval'
-    });
-
-    var obj = new ctor();
-
-    a.equal(obj.foo, 'hellogoodbye');
-    a.end();
-
-});
-
 test('trait list', function(a) {
 
     traits.register('trait-list-1', function(){});
