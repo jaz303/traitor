@@ -6,16 +6,17 @@ exports.register    = registry.register;
 exports.make        = make;
 exports.extend      = extend;
 
-function make(traits, ctor, opts) {
+function make(traits, methods) {
 
-    if (ctor && (typeof ctor !== 'function')) {
-        opts = ctor;
-        ctor = null;
+    methods = methods || {};
+
+    if (typeof methods === 'function') {
+        methods = { __construct: methods };
     }
 
-    var builder = new TraitBuilder(ctor, registry.expand(traits));
+    var builder = new TraitBuilder(registry.expand(traits), methods);
 
-    ctor = builder.__compile__(opts || {});
+    ctor = builder.__compile__();
 
     // FIXME: this is a total hack and should be destroyed
     // (only exists because some tests still rely on it)
