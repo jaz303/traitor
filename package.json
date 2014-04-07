@@ -4,7 +4,7 @@
   "description": "Traits library",
   "main": "index.js",
   "scripts": {
-    "test": "set -e; for t in test/*.js; do node $t; done"
+    "test": "set -e; for t in test/*.js; do node $t | tap-dot; done"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/jaz303/traitor",
   "devDependencies": {
-    "tape": "~2.10.2"
+    "tape": "~2.10.2",
+    "tap-dot": "~0.2.1"
   }
 }
