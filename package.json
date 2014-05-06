@@ -1,6 +1,6 @@
 {
   "name": "traitor",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Traits library",
   "main": "index.js",
   "scripts": {
