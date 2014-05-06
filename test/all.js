@@ -205,51 +205,6 @@ test('traits should only be applied once, no matter how many times they are spec
 
 });
 
-//
-// emitter
-
-test('on, emit and cancel', function(a) {
-
-    var ctor = traits.make(['emitter']),
-        obj = new ctor(),
-        tally = 0;
-
-    var cancel = obj.on('foo', function() {
-        tally++;
-    });
-
-    obj.emit('foo');
-    obj.emit('foo');
-    obj.emit('bar');
-
-    cancel();
-
-    obj.emit('foo');
-
-    a.equal(tally, 2);
-    a.end();
-
-});
-
-test('once', function(a) {
-
-    var ctor = traits.make(['emitter']),
-        obj = new ctor(),
-        tally = 0;
-
-    obj.once('foo', function() {
-        tally++;
-    });
-
-    obj.emit('foo');
-    obj.emit('foo');
-    obj.emit('foo');
-
-    a.equal(tally, 1);
-    a.end();
-
-});
-
 test('bound method', function(a) {
 
     var ctor = traits.make(['methods']),
