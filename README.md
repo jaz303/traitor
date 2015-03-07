@@ -1,6 +1,8 @@
 # traitor
 
-Traitor is a traits library for Javascript.
+`traitor` is a traits library for Javascript, allowing classes to be composed from distinct slices of functionality ("traits") instead of relying on traditional inheritance.
+
+`traitor` strives to be efficient and the classes it generates should carry minimal overhead when compared to traditional Javascript objects.
 
 ## Installation
 
@@ -20,6 +22,8 @@ var traits = require('traitor');
 
 To define a new trait, use `traits.register(traitName, callback)`. The callback receives a `TraitBuilder` instance, documented blow, that is used to define the new trait's characteristics.
 
+Example:
+
 ```javascript
 traits.register('has-name', function(def) {
 
@@ -37,6 +41,8 @@ traits.register('has-name', function(def) {
 
 });
 ```
+
+### `TraitBuilder` documentation
 
 #### `def.value(name, value)`
 
@@ -158,33 +164,84 @@ obj.save(); // => "afterSave in thing1\nafterSave in thing2\n"
 
 ## Creating a class
 
+Creating a class based on previously defined traits is as simple as calling `traits.make()`, passing a list of the traits to include, as well as any additional methods to be added to the class.
+
+Rather than an object instance, `traits.make()` returns a constructor function that can be used to create instances via `new`. `traits.make()` is quite an expensive operation - and it's common to make many objects featuring the same list of traits - so it makes sense to "compile" class definitions to conventional Javascript constructor functions, allowing multiple instances to be created relatively cheaply.
+
+Traits are added to the generated class in the order in which they appear in the call to `traits.make()`; in the event of any naming conflict the latest definition wins.
+
+#### `traits.make(traitList, [extraMethods])`
+
+Create a class using the trait names listed in `traitList`. These traits will be added to the resultant class in order and in the event of naming conflicts the latest definition wins.
+
+`extraMethods` is an optional parameter that can be used to add ad-hoc methods onto the class definition without having to make a dedicated trait. These methods will be added after all other traits have been added to the class and will therefore any override any previous definitions in the event of naming conflicts.
+
+An explicit constructor can be defined by assigning a function to the `__construct` key of `extraMethods`. You can also just pass a function to `extraMethods` if no other extra methods besides a constructor are required.
 
 ## Built-in Traits
 
 ### `meta`
 
+Objects including the `meta` trait can introspect their own traits.
+
 #### `hasTrait(name)`
+
+Returns `true` if this object includes trait `name`, `false` otherwise.
 
 #### `traitNames()`
 
+Returns an array of the names of all traits included by this object.
+
 ### `events`
 
-#### `off(ev)`
+`events` provides objects with a hierarchical event system.
+
+#### `off([ev])`
+
+Remove all registered handlers for event `ev`, or all registered event handlers if `ev` is unspecified.
 
 #### `on(ev, callback)`
 
+Bind `callback` to be invoked whenever event `ev` is emitted.
+
+Returns a cancellation function that can be used to remove the binding.
+
 #### `once(ev, callback)`
+
+Bind `callback` to be called the next time `ev` is emitted. The event binding will then be removed.
+
+Returns a cancellation function that can be used to remove the binding.
 
 #### `emit(ev, [args...])`
 
+Emit event `ev`, triggering all defined handlers in unspecified order. Any additional arguments passed will be forwarded to the event handlers.
+
+Events are organised into a hierarchy using `:`; triggering a child event will also invoke any parent handlers. For example, emitting `change:set`, `change:sort` or `change:remove` would invoke handlers registered for the `change` event in addition to handlers registered for the original event.
+
 #### `emitArray(ev, args)`
+
+Same as `emit()`, but accepts an array of event arguments rather than extracting them positionally.
 
 #### `emitAfter(delay, ev, [args...])`
 
+Emit event `ev` after `delay` milliseconds. Returns a cancellation function that can be used to cancel the event before it is fired.
+
 #### `emitEvery(interval, ev, [args...])`
+
+Emit event `ev` every `interval` milliseconds. Returns a cancellation function that be used to stop the events.
 
 ### `methods`
 
 #### `boundMethod(method)`
 
+Returns a function which binds `receiver[method]` to `receiver`. The value of `receiver[method]` is captured at the time this function is called and is thereafter immutable.
+
 #### `lazyMethod(method)`
+
+Returns a function which binds `receiver[method]` to `receiver`. The value of `receiver[method]` will be looked up each time the returned function is called.
+
+## Copyright &amp; License
+
+&copy; 2014-2015 Jason Frame [ [@jaz303](http://twitter.com/jaz303) / [jason@onehackoranother.com](mailto:jason@onehackoranother.com) ]
+
+Released under the ISC license.
