@@ -154,6 +154,7 @@ traits.register('thing2', function(def) {
 var ctor = traits.make(['saveable', 'thing1', 'thing2']);
 var obj = new ctor();
 obj.save(); // => "afterSave in thing1\nafterSave in thing2\n"
+```
 
 ## Creating a class
 
